@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -16,6 +17,7 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -23,20 +25,24 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.myapplication.ui.theme.MyApplicationTheme
 import com.example.myapplication.ui.theme.Themes
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
+    @ExperimentalMaterialApi
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
 
+            val scaffoldState= rememberBottomSheetScaffoldState()
             val color = remember{mutableStateOf<Themes>(Themes.Blue)}
             val darkTheme= remember{ mutableStateOf(false) }
+            val scope= rememberCoroutineScope()
+            val expanded = remember{ mutableStateOf(false) }
 
             window.statusBarColor=if(darkTheme.value)
                 android.graphics.Color.parseColor("#121212")
@@ -44,12 +50,31 @@ class MainActivity : ComponentActivity() {
                 color.value.light.primaryVariant.toArgb()
 
 
+
+                if (expanded.value)
+                    scope.launch {
+                        scaffoldState.bottomSheetState.expand()
+                    }
+                else
+                    scope.launch {
+                        scaffoldState.bottomSheetState.collapse()
+                    }
+
             MyApplicationTheme(
                 darkTheme.value,
                 color.value
             ) {
-                Scaffold(
+                BottomSheetScaffold(
                     topBar = {TopBar()},
+                    sheetContent = {
+                        MyBottomSheet(
+                            color =color.value.getColor(),
+                            expanded = expanded.value
+                        ){
+                            expanded.value= !expanded.value
+                        }},
+                    sheetPeekHeight = 60.dp,
+                    sheetShape = RoundedCornerShape(8.dp,8.dp,0.dp,0.dp)
                 ) {
 
                     Content(
